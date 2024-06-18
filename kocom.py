@@ -518,7 +518,7 @@ def packet_processor(p):
         elif p['dest'] == 'light' and p['cmd']=='state':
         #elif p['src'] == 'light' and p['cmd']=='state':
             state = light_parse(p['value'])
-            logtxt='[MQTT publish|light] data[{}]'.format(state)
+            logtxt='[MQTT publish|light] room{} data[{}]'.format(state)
             mqttc.publish("kocom/livingroom/light/state", json.dumps(state))
         elif p['dest'] == 'fan' and p['cmd']=='state':
         #elif p['src'] == 'fan' and p['cmd']=='state':
@@ -639,7 +639,7 @@ def publish_discovery(dev, sub=''):
     elif dev == 'light':
         for num in range(1, int(config.get('User', 'light_count'))+1):
             #ha_topic = 'homeassistant/light/kocom_livingroom_light1/config'
-            topic = 'homeassistant/light/kocom_livingroom_light{}/config'.format(num)
+            topic = 'homeassistant/light/kocom_{}_light{}/config'.format(sub,num)
             payload = {
                 'name': 'Kocom Livingroom Light{}'.format(num),
                 'cmd_t': 'kocom/livingroom/light/{}/command'.format(num),
