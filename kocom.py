@@ -518,7 +518,7 @@ def packet_processor(p):
         elif p['dest'] == 'light' and p['cmd']=='state':
         #elif p['src'] == 'light' and p['cmd']=='state':
             state = light_parse(p['value'])
-            logtxt='[MQTT publish|light] room{} data[{}]'.format(state)
+            logtxt='[MQTT publish|light] data[{}]'.format(state)
             mqttc.publish("kocom/livingroom/light/state", json.dumps(state))
         elif p['dest'] == 'fan' and p['cmd']=='state':
         #elif p['src'] == 'fan' and p['cmd']=='state':
