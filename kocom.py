@@ -637,9 +637,9 @@ def publish_discovery(dev, sub=''):
         if logtxt != "" and config.get('Log', 'show_mqtt_publish') == 'True':
             logging.info(logtxt)
     elif dev == 'light':
-	     sub1 = int(room_h_dic.get(sub))
+	     
              for num in range(1, int(config.get('User', 'light_count'))+1):
-		     
+		sub1 = int(room_h_dic.get(sub))  
             	topic = 'homeassistant/light/kocom_{}_light{}/config'.format(sub1,num)
             	payload = {
               	  'name': 'Kocom {} Light{}'.format(sub1, num),
