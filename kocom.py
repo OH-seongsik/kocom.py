@@ -24,7 +24,7 @@ import configparser
 
 
 # define -------------------------------
-SW_VERSION = '2024.03.12'
+SW_VERSION = '2024.03.13'
 CONFIG_FILE = 'kocom.conf'
 BUF_SIZE = 100
 
@@ -662,31 +662,7 @@ def publish_discovery(dev, sub=''):
             if logtxt != "" and config.get('Log', 'show_mqtt_publish') == 'True':
                 logging.info(logtxt)
 
-     elif dev == 'light':
-        for num in range(1, int(config.get('User', 'light_count'))+1):
-            #ha_topic = 'homeassistant/light/kocom_livingroom_light1/config'
-            topic = 'homeassistant/light/kocom_room1_light{}/config'.format(num)
-            payload = {
-                'name': 'Kocom room1 Light{}'.format(num),
-                'cmd_t': 'kocom/room1/light/{}/command'.format(num),
-                'stat_t': 'kocom/room1/light/state',
-                'stat_val_tpl': '{{ value_json.light_' + str(num) + ' }}',
-                'pl_on': 'on',
-                'pl_off': 'off',
-                'qos': 0,
-                'uniq_id': '{}_{}_{}{}'.format('kocom', 'wallpad', dev, num),
-                'device': {
-                    'name': '코콤 스마트 월패드',
-                    'ids': 'kocom_smart_wallpad',
-                    'mf': 'KOCOM',
-                    'mdl': '스마트 월패드',
-                    'sw': SW_VERSION
-                }
-            }
-            logtxt='[MQTT Discovery|{}{}] data[{}]'.format(dev, num, topic)
-            mqttc.publish(topic, json.dumps(payload))
-            if logtxt != "" and config.get('Log', 'show_mqtt_publish') == 'True':
-                logging.info(logtxt)
+    
 
 
  
