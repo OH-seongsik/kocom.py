@@ -637,6 +637,7 @@ def publish_discovery(dev, sub=''):
         if logtxt != "" and config.get('Log', 'show_mqtt_publish') == 'True':
             logging.info(logtxt)
     elif dev == 'light':
+	
         for num in range(1, int(config.get('User', 'light_count'))+1):
             #ha_topic = 'homeassistant/light/kocom_livingroom_light1/config'
             topic = 'homeassistant/light/kocom_{}_light{}/config'.format(sub,num)
@@ -657,7 +658,7 @@ def publish_discovery(dev, sub=''):
                     'sw': SW_VERSION
                 }
             }
-            logtxt='[MQTT Discovery|{}{}] data[{}]'.format(dev, num, topic)
+            logtxt='[MQTT Discovery|{}_{}_{}] data[{}]'.format(sub, dev, num, topic)
             mqttc.publish(topic, json.dumps(payload))
             if logtxt != "" and config.get('Log', 'show_mqtt_publish') == 'True':
                 logging.info(logtxt)
