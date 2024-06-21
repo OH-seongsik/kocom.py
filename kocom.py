@@ -24,7 +24,7 @@ import configparser
 
 
 # define -------------------------------
-SW_VERSION = '2024.03.14'
+SW_VERSION = '2024.03.12'
 CONFIG_FILE = 'kocom.conf'
 BUF_SIZE = 100
 
@@ -661,11 +661,6 @@ def publish_discovery(dev, sub=''):
             mqttc.publish(topic, json.dumps(payload))
             if logtxt != "" and config.get('Log', 'show_mqtt_publish') == 'True':
                 logging.info(logtxt)
-
-    
-
-
- 
     elif dev == 'thermo':
         num= int(room_h_dic.get(sub))
         #ha_topic = 'homeassistant/climate/kocom_livingroom_thermostat/config'
