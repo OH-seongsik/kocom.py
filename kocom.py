@@ -273,10 +273,8 @@ def parse(hex_data):
             'seq':seq_t_dic.get(seq_h), 
             'dest':device_t_dic.get(dest_h[:2]),
             'dest_subid':str(int(dest_h[2:4], 16)),
-
             'src':device_t_dic.get(src_h[:2]),
             'src_subid':str(int(src_h[2:4], 16)),
-
             'cmd':cmd if cmd!=None else cmd_h,
             'value':value_h,
             'time': time.time(),
@@ -301,8 +299,7 @@ def light_parse(value):
 
 def fan_parse(value):
     preset_dic = {'40':'Low', '80':'Medium', 'c0':'High'}
-    state = 'off' if value[:2] == '10' else 'on' 
-#  state = 'off' if value[:2] == '00' else 'on'
+    state = 'off' if value[:2] == '10' else 'on' #state = 'off' if value[:2] == '00' else 'on'
     preset = 'Off' if state == 'off' else preset_dic.get(value[4:6])
     return { 'state': state, 'preset': preset}
 
@@ -408,7 +405,6 @@ def mqtt_on_message(mqttc, obj, msg):
 
     # thermo heat/off : kocom/room/thermo/3/heat_mode/command
     if 'thermo' in topic_d and 'heat_mode' in topic_d:
-
         heatmode_dic = {'heat': '11', 'off': '01'} 
 
         dev_id = device_h_dic['thermo']+'{0:02x}'.format(int(topic_d[3]))
@@ -448,8 +444,6 @@ def mqtt_on_message(mqttc, obj, msg):
             send_wait_response(dest=dev_id, cmd=cmd_h_dic.get(command), log='gas')
         else:
             logging.info('You can only turn off gas.')
-
-
 
     # elevator on/off : kocom/myhome/elevator/command
     elif 'elevator' in topic_d:
@@ -605,7 +599,6 @@ def publish_discovery(dev, sub=''):
             'val_tpl': '{{ value_json.state }}',
             'pl_on': 'on',
             'pl_off': 'off',
-
             'qos': 0,
             'uniq_id': '{}_{}_{}'.format('kocom', 'wallpad', dev),
             'device': {
@@ -629,7 +622,6 @@ def publish_discovery(dev, sub=''):
             'val_tpl': "{{ value_json.state }}",
             'pl_on': 'on',
             'pl_off': 'off',
-
             'qos': 0,
             'uniq_id': '{}_{}_{}'.format('kocom', 'wallpad', dev),
             'device': {
@@ -647,11 +639,11 @@ def publish_discovery(dev, sub=''):
     elif dev == 'light':
         for num in range(1, int(config.get('User', 'light_count'))+1):
             #ha_topic = 'homeassistant/light/kocom_livingroom_light1/config'
-            topic = 'homeassistant/light/kocom_{}_light{}/config'.format(sub,num)
+            topic = 'homeassistant/light/kocom_livingroom_light{}/config'.format(num)
             payload = {
-                'name': 'Kocom_{}_Light{}'.format(sub, num),
-                'cmd_t': 'kocom/{}/light/{}/command'.format(sub, num),
-                'stat_t': 'kocom/{}/light/state.format(sub)',
+                'name': 'Kocom Livingroom Light{}'.format(num),
+                'cmd_t': 'kocom/livingroom/light/{}/command'.format(num),
+                'stat_t': 'kocom/livingroom/light/state',
                 'stat_val_tpl': '{{ value_json.light_' + str(num) + ' }}',
                 'pl_on': 'on',
                 'pl_off': 'off',
@@ -678,11 +670,9 @@ def publish_discovery(dev, sub=''):
             'mode_stat_t': 'kocom/room/thermo/{}/state'.format(num),
             'mode_cmd_t': 'kocom/room/thermo/{}/heat_mode/command'.format(num),
             'mode_stat_tpl': '{{ value_json.heat_mode }}',
-
             'temp_stat_t': 'kocom/room/thermo/{}/state'.format(num),
             'temp_cmd_t': 'kocom/room/thermo/{}/set_temp/command'.format(num),
             'temp_stat_tpl': '{{ value_json.set_temp }}',
-
             'curr_temp_t': 'kocom/room/thermo/{}/state'.format(num),
             'curr_temp_tpl': '{{ value_json.cur_temp }}',
             'modes': ['off', 'heat'],
