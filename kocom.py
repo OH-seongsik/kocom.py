@@ -636,10 +636,10 @@ def publish_discovery(dev, sub=''):
         mqttc.publish(topic, json.dumps(payload))
         if logtxt != "" and config.get('Log', 'show_mqtt_publish') == 'True':
             logging.info(logtxt)
-    elif dev == 'light':
+    elif dev == 'light':	
 	
-	for sub in range(1, int(room_h_dic.get(sub)+1):
              for num in range(1, int(config.get('User', 'light_count'))+1):
+		sub = room_h_dic.get(sub) + 1
           	  #ha_topic = 'homeassistant/light/kocom_livingroom_light1/config'
             	topic = 'homeassistant/light/kocom_{}_light{}/config'.format(sub,num)
             	payload = {
@@ -658,7 +658,7 @@ def publish_discovery(dev, sub=''):
                  	    'mdl': '스마트 월패드',
                  	    'sw': SW_VERSION
 		  	    }
-                }
+                
             }
             logtxt='[MQTT Discovery|{}_{}_{}] data[{}]'.format(sub, dev, num, topic)
             mqttc.publish(topic, json.dumps(payload))
