@@ -4,7 +4,7 @@
 '''
  python kocom script
 
- : forked from script written by 날자, 룰루해피, 따분, Susu Daddy
+ : forked from script written by kyet, 룰루해피, 따분, Susu Daddy
 
  apt-get install mosquitto
  python3 -m pip install pyserial
@@ -40,22 +40,18 @@ type_t_dic = {'30b':'send', '30d':'ack'}
 seq_t_dic = {'c':1, 'd':2, 'e':3, 'f':4}
 device_t_dic = {'01':'wallpad', '0e':'light', '2c':'gas', '36':'thermo', '3b': 'plug', '44':'elevator', '48':'fan'}
 cmd_t_dic = {'00':'state', '01':'on', '02':'off', '3a':'query'}
-#room_t_dic = {'00':'livingroom', '01':'bedroom', '02':'room1', '03':'room2'}
-room_t_dic = {'00':'livingroom', '01':'room1', '02':'room2', '03':'room3', '04':'room4', '05':'room5', '06':'kitchen'}
+room_t_dic = {'00':'livingroom', '01':'bedroom', '02':'room1', '03':'room2'}
 
 type_h_dic = {v: k for k, v in type_t_dic.items()}
 seq_h_dic = {v: k for k, v in seq_t_dic.items()}
 device_h_dic = {v: k for k, v in device_t_dic.items()}
 cmd_h_dic = {v: k for k, v in cmd_t_dic.items()}
-#room_h_dic = {'livingroom':'00', 'myhome':'00', 'bedroom':'01', 'room1':'02', 'room2':'03'}
-room_h_dic = {'myhome': '00', 'livingroom':'00', 'room1':'01', 'room2':'02', 'room3':'03', 'room4':'04', 'room5':'05', 'kitchen':'06'}
-# myhome cannot be removed because it is used in gas, fan, elevator
+room_h_dic = {'livingroom':'00', 'myhome':'00', 'bedroom':'01', 'room1':'02', 'room2':'03'}
 
-room_names = [ 'livingroom', 'working_room_balcony', 'ejoon_room', 'jiwon_room', 'grand_room', 'anbang', 'dining_table']
 # mqtt functions ----------------------------
 
 def init_mqttc():
-    mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+    mqttc = mqtt.Client()
     mqttc.on_message = mqtt_on_message
     mqttc.on_subscribe = mqtt_on_subscribe
     mqttc.on_connect = mqtt_on_connect
@@ -80,13 +76,13 @@ def init_mqttc():
             time.sleep(10)
     return False
 
-def mqtt_on_subscribe(mqttc, obj, mid, granted_qos, properties): # , properties is added
+def mqtt_on_subscribe(mqttc, obj, mid, granted_qos):
     logging.info("[MQTT] Subscribed: " + str(mid) + " " + str(granted_qos))
 
 def mqtt_on_log(mqttc, obj, level, string):
     logging.info("[MQTT] on_log : "+string)
 
-def mqtt_on_connect(mqttc, userdata, flags, rc, properties): # , properties is added
+def mqtt_on_connect(mqttc, userdata, flags, rc):
     if rc == 0:
         logging.info("[MQTT] Connected - 0: OK")
         mqttc.subscribe('kocom/#', 0)
@@ -277,10 +273,10 @@ def parse(hex_data):
             'seq':seq_t_dic.get(seq_h),
             'dest':device_t_dic.get(dest_h[:2]),
             'dest_subid':str(int(dest_h[2:4], 16)),
-            'dest_room':room_t_dic.get(dest_h[2:4]),
+            'dest_room':room_t_dic.get(dest_h[2:4]), 
             'src':device_t_dic.get(src_h[:2]),
             'src_subid':str(int(src_h[2:4], 16)),
-            'src_room':room_t_dic.get(src_h[2:4]),
+            'src_room':room_t_dic.get(src_h[2:4]),  
             'cmd':cmd if cmd!=None else cmd_h,
             'value':value_h,
             'time':time.time(),
@@ -306,7 +302,7 @@ def light_parse(value):
 def fan_parse(value):
     preset_dic = {'40':'Low', '80':'Medium', 'c0':'High'}
     state = 'off' if value[:2] == '10' else 'on'
-#    state = 'off' if value[:2] == '00' else 'on'
+#  state = 'off' if value[:2] == '00' else 'on'
     preset = 'Off' if state == 'off' else preset_dic.get(value[4:6])
     return { 'state': state, 'preset': preset}
 
@@ -518,32 +514,35 @@ def publish_status(p):
 
 def packet_processor(p):
     logtxt = ""
+
     if p['type'] == 'send' and p['dest'] == 'wallpad':  # response packet to wallpad
+
         if p['src'] == 'thermo' and p['cmd'] == 'state':
             state = thermo_parse(p['value'])
             logtxt='[MQTT publish|thermo] id[{}] data[{}]'.format(p['src_subid'], state)
             mqttc.publish("kocom/room/thermo/" + p['src_subid'] + "/state", json.dumps(state))
+
         elif p['src'] == 'light' and p['cmd'] == 'state':
             state = light_parse(p['value'])
             logtxt='[MQTT publish|light] room[{}] data[{}]'.format(p['src_room'], state)
             mqttc.publish("kocom/{}/light/state".format(p['src_room']), json.dumps(state))
+
         elif p['src'] == 'fan' and p['cmd'] == 'state':
             state = fan_parse(p['value'])
             logtxt='[MQTT publish|fan] data[{}]'.format(state)
             mqttc.publish("kocom/livingroom/fan/state", json.dumps(state))
+
         elif p['src'] == 'gas':
             state = {'state': p['cmd']}
             logtxt='[MQTT publish|gas] data[{}]'.format(state)
             mqttc.publish("kocom/livingroom/gas/state", json.dumps(state))
     elif p['type'] == 'send' and p['dest'] == 'elevator':
-        # floor = int(p['value'][2:4],16)
+        floor = int(p['value'][2:4],16)
         rs485_floor = int(config.get('Elevator','rs485_floor', fallback=0))
         if rs485_floor != 0 :
-#            state = {'floor': floor}
-#            if rs485_floor == floor:
-#                state['state'] = 'off'
-            if p['value'] == '0300000000000000' :  # 도착패킷수신시 state off로 변경
-                state = {'state': 'off'}
+            state = {'floor': floor}
+            if rs485_floor == floor:
+                state['state'] = 'off'
         else:
             state = {'state': 'off'}
         logtxt='[MQTT publish|elevator] data[{}]'.format(state)
@@ -568,16 +567,11 @@ def discovery():
 
 #https://www.home-assistant.io/docs/mqtt/discovery/
 #<discovery_prefix>/<component>/<object_id>/config
-light_cnt = 0
-thermo_cnt = 0
 def publish_discovery(dev, sub=''):
-    global light_cnt
-    global thermo_cnt
- 
     if dev == 'fan':
         topic = 'homeassistant/fan/kocom_wallpad_fan/config'
         payload = {
-            'name': 'Wallpad Fan',
+            'name': 'Kocom Wallpad Fan',
             'cmd_t': 'kocom/livingroom/fan/command',
             'stat_t': 'kocom/livingroom/fan/state',
             'stat_val_tpl': '{{ value_json.state }}',
@@ -591,7 +585,7 @@ def publish_discovery(dev, sub=''):
             'qos': 0,
             'uniq_id': '{}_{}_{}'.format('kocom', 'wallpad', dev),
             'device': {
-                'name': 'Kocom',
+                'name': '코콤 스마트 월패드',
                 'ids': 'kocom_smart_wallpad',
                 'mf': 'KOCOM',
                 'mdl': '스마트 월패드',
@@ -605,7 +599,7 @@ def publish_discovery(dev, sub=''):
     elif dev == 'gas':
         topic = 'homeassistant/switch/kocom_wallpad_gas/config'
         payload = {
-            'name': 'Wallpad Gas',
+            'name': 'Kocom Wallpad Gas',
             'cmd_t': 'kocom/livingroom/gas/command',
             'stat_t': 'kocom/livingroom/gas/state',
             'val_tpl': '{{ value_json.state }}',
@@ -615,7 +609,7 @@ def publish_discovery(dev, sub=''):
             'qos': 0,
             'uniq_id': '{}_{}_{}'.format('kocom', 'wallpad', dev),
             'device': {
-                'name': 'Kocom',
+                'name': '코콤 스마트 월패드',
                 'ids': 'kocom_smart_wallpad',
                 'mf': 'KOCOM',
                 'mdl': '스마트 월패드',
@@ -629,7 +623,7 @@ def publish_discovery(dev, sub=''):
     elif dev == 'elevator':
         topic = 'homeassistant/switch/kocom_wallpad_elevator/config'
         payload = {
-            'name': 'Wallpad Elevator',
+            'name': 'Kocom Wallpad Elevator',
             'cmd_t': "kocom/myhome/elevator/command",
             'stat_t': "kocom/myhome/elevator/state",
             'val_tpl': "{{ value_json.state }}",
@@ -639,7 +633,7 @@ def publish_discovery(dev, sub=''):
             'qos': 0,
             'uniq_id': '{}_{}_{}'.format('kocom', 'wallpad', dev),
             'device': {
-                'name': 'Kocom',
+                'name': '코콤 스마트 월패드',
                 'ids': 'kocom_smart_wallpad',
                 'mf': 'KOCOM',
                 'mdl': '스마트 월패드',
@@ -651,39 +645,36 @@ def publish_discovery(dev, sub=''):
         if logtxt != "" and config.get('Log', 'show_mqtt_publish') == 'True':
             logging.info(logtxt)
     elif dev == 'light':
-        light_cnt = light_cnt + 1
-     
-        # for num in range(1, int(config.get('User', 'light_count'))+1):  # only one light per room
-        topic = 'homeassistant/light/kocom_{}_light{}/config'.format(room_names[light_cnt-1], 1) # sub->room_names[], num -> 1
-        payload = {
-            'name': '{} Light'.format(room_names[light_cnt-1]), # sub -> room_names[]
-            'cmd_t': 'kocom/{}/light/{}/command'.format(sub, 1),
-            'stat_t': 'kocom/{}/light/state'.format(sub),
-            'stat_val_tpl': '{{ value_json.light_' + str(1) + ' }}',
-            'pl_on': 'on',
-            'pl_off': 'off',
-            'qos': 0,
-            'uniq_id': '{}_{}_{}{}'.format('kocom', 'wallpad', dev, light_cnt),
-            'device': {
-                'name': 'Kocom',
-                'ids': 'kocom_smart_wallpad',
-                'mf': 'KOCOM',
-                'mdl': '스마트 월패드',
-                'sw': SW_VERSION
+        for num in range(1, int(config.get('User', 'light_count'))+1):
+            #ha_topic = 'homeassistant/light/kocom_livingroom_light1/config'
+            topic = 'homeassistant/light/kocom_{}_light{}/config'.format(sub, num)
+            payload = {
+                'name': 'Kocom {} Light{}'.format(sub, num),
+                'cmd_t': 'kocom/{}/light/{}/command'.format(sub, num),
+                'stat_t': 'kocom/{}/light/state'.format(sub),
+                'stat_val_tpl': '{{ value_json.light_' + str(num) + ' }}',
+                'pl_on': 'on',
+                'pl_off': 'off',
+                'qos': 0,
+                'uniq_id': '{}_{}_{}{}'.format('kocom', 'wallpad', dev, num),
+                'device': {
+                    'name': '코콤 스마트 월패드',
+                    'ids': 'kocom_smart_wallpad',
+                    'mf': 'KOCOM',
+                    'mdl': '스마트 월패드',
+                    'sw': SW_VERSION
+                }
             }
-        }
-        logtxt='[MQTT Discovery|{}{}] data[{}]'.format(dev, light_cnt, topic)
-        mqttc.publish(topic, json.dumps(payload))
-        if logtxt != "" and config.get('Log', 'show_mqtt_publish') == 'True':
-            logging.info(logtxt)
+            logtxt='[MQTT Discovery|{}{}] data[{}]'.format(dev, num, topic)
+            mqttc.publish(topic, json.dumps(payload))
+            if logtxt != "" and config.get('Log', 'show_mqtt_publish') == 'True':
+                logging.info(logtxt)
     elif dev == 'thermo':
-        thermo_cnt = thermo_cnt + 1
-     
         num = int(room_h_dic.get(sub))
         #ha_topic = 'homeassistant/climate/kocom_livingroom_thermostat/config'
-        topic = 'homeassistant/climate/kocom_{}_thermostat/config'.format(room_names[thermo_cnt-1])
+        topic = 'homeassistant/climate/kocom_{}_thermostat/config'.format(sub)
         payload = {
-            'name': '{} Thermostat'.format(room_names[thermo_cnt-1]),
+            'name': 'Kocom {} Thermostat'.format(sub),
             'mode_cmd_t': 'kocom/room/thermo/{}/heat_mode/command'.format(num),
             'mode_stat_t': 'kocom/room/thermo/{}/state'.format(num),
             'mode_stat_tpl': '{{ value_json.heat_mode }}',
@@ -696,12 +687,12 @@ def publish_discovery(dev, sub=''):
             'curr_temp_tpl': '{{ value_json.cur_temp }}',
             'modes': ['off', 'heat'],
             'min_temp': 20,
-            'max_temp': 25,
+            'max_temp': 30,
             'ret': 'false',
             'qos': 0,
             'uniq_id': '{}_{}_{}{}'.format('kocom', 'wallpad', dev, num),
             'device': {
-                'name': 'Kocom',
+                'name': '코콤 스마트 월패드',
                 'ids': 'kocom_smart_wallpad',
                 'mf': 'KOCOM',
                 'mdl': '스마트 월패드',
@@ -715,12 +706,12 @@ def publish_discovery(dev, sub=''):
     elif dev == 'query':
         topic = 'homeassistant/button/kocom_wallpad_query/config'
         payload = {
-            'name': 'Wallpad Query',
+            'name': 'Kocom Wallpad Query',
             'cmd_t': 'kocom/myhome/query/command',
             'qos': 0,
             'uniq_id': '{}_{}_{}'.format('kocom', 'wallpad', dev),
             'device': {
-                'name': 'Kocom',
+                'name': '코콤 스마트 월패드',
                 'ids': 'kocom_smart_wallpad',
                 'mf': 'KOCOM',
                 'mdl': '스마트 월패드',
