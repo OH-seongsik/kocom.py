@@ -636,12 +636,10 @@ def publish_discovery(dev, sub=''):
         mqttc.publish(topic, json.dumps(payload))
         if logtxt != "" and config.get('Log', 'show_mqtt_publish') == 'True':
             logging.info(logtxt)
-    elif dev == 'light':	
-	
+    elif dev == 'light':		
              for num in range(1, int(config.get('User', 'light_count'))+1):
-		sub = room_h_dic.get(sub) + 1
-          	  #ha_topic = 'homeassistant/light/kocom_livingroom_light1/config'
-            	topic = 'homeassistant/light/kocom_{}_light{}/config'.format(sub,num)
+		     
+            	topic = 'homeassistant/light/kocom_{}_light{}/config'.format(room_h_dic.get(sub),num)
             	payload = {
               	  'name': 'Kocom {} Light{}'.format(sub, num),
               	  'cmd_t': 'kocom/{}/light/{}/command'.format(sub, num),
