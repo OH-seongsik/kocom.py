@@ -640,7 +640,7 @@ def publish_discovery(dev, sub=''):
 	    
              for num in range(1, int(config.get('User', 'light_count'))+1):
 
-            	topic = 'homeassistant/light/kocom_{}_light{}/config'.format(sub1,num)
+            	topic = 'homeassistant/light/kocom_{}_light{}/config'.format(sub,num)
             	payload = {
               	 'name': 'Kocom {} Light{}'.format(sub, num),
               	 'cmd_t': 'kocom/{}/light/{}/command'.format(sub, num),
