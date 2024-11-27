@@ -299,12 +299,20 @@ def light_parse(value):
 
 
 def fan_parse(value):
+    #preset_dic = {'40':'Low', '80':'Medium', 'c0':'High'}
+    #state = 'off' if value[:2] == '10' else 'on' #state = 'off' if value[:2] == '00' else 'on'
+    #preset = 'Off' if state == 'off' else preset_dic.get(value[4:6])
+    #return { 'state': state, 'preset': preset}
+
+
     preset_dic = {'40':'Low', '80':'Medium', 'c0':'High'}
-    state = 'off' if value[:2] == '10' else 'on' #state = 'off' if value[:2] == '00' else 'on'
+#   state = 'off' if value[:2] == '10' else 'on'
+    state = 'off' if value[:2] == '00' else 'on'
     preset = 'Off' if state == 'off' else preset_dic.get(value[4:6])
+    logtxt='[MQTT Parse | Fan] value[{}], state[{}]'.format(value, state)    # 20221108 주석기능 추가
+    if logtxt != "" and config.get('Log', 'show_recv_hex') == 'True':
+        logging.info(logtxt)
     return { 'state': state, 'preset': preset}
-
-
 # query device --------------------------
 
 def query(device_h, publish=False, enforce=False):
@@ -516,12 +524,12 @@ def packet_processor(p):
             state = thermo_parse(p['value'])
             logtxt='[MQTT publish|thermo] room{} data[{}]'.format(p['dest_subid'], state)
             mqttc.publish("kocom/room/thermo/" + p['dest_subid'] + "/state", json.dumps(state))
-        elif p['dest'] == 'light' and p['cmd']=='state':
+        #elif p['dest'] == 'light' and p['cmd']=='state':
         
         #    state = light_parse(p['value'])
         #    logtxt='[MQTT publish|light] data[{}]'.format(state)
         #    mqttc.publish("kocom/livingroom/light/state", json.dumps(state))
-        #elif p['src'] == 'light' and p['cmd'] == 'state':
+        elif p['src'] == 'light' and p['cmd'] == 'state':
             state = light_parse(p['value'])
             logtxt='[MQTT publish|light] room[{}] data[{}]'.format(p['src_room'], state)
             mqttc.publish("kocom/{}/light/state".format(p['src_room']), json.dumps(state))
