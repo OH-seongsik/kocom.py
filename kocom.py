@@ -522,8 +522,8 @@ def packet_processor(p):
         #    mqttc.publish("kocom/livingroom/light/state", json.dumps(state))
         #elif p['src'] == 'light' and p['cmd'] == 'state':
             state = light_parse(p['value'])
-            logtxt='[MQTT publish|light] room[{}] data[{}]'.format(p['src_room'], state)
-            mqttc.publish("kocom/{}/light/state".format(p['src_room']), json.dumps(state))
+            logtxt='[MQTT publish|light] room[{}] data[{}]'.format(p['dest_room'], state)
+            mqttc.publish("kocom/{}/light/state".format(p['dest_room']), json.dumps(state))
 
         elif p['dest'] == 'fan' and p['cmd']=='state':
         #elif p['src'] == 'fan' and p['cmd']=='state':
