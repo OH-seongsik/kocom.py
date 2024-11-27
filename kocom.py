@@ -515,12 +515,12 @@ def packet_processor(p):
             state = thermo_parse(p['value'])
             logtxt='[MQTT publish|thermo] room{} data[{}]'.format(p['dest_subid'], state)
             mqttc.publish("kocom/room/thermo/" + p['dest_subid'] + "/state", json.dumps(state))
-        #elif p['dest'] == 'light' and p['cmd']=='state':
+        elif p['dest'] == 'light' and p['cmd']=='state':
         
         #    state = light_parse(p['value'])
         #    logtxt='[MQTT publish|light] data[{}]'.format(state)
         #    mqttc.publish("kocom/livingroom/light/state", json.dumps(state))
-        elif p['src'] == 'light' and p['cmd'] == 'state':
+        #elif p['src'] == 'light' and p['cmd'] == 'state':
             state = light_parse(p['value'])
             logtxt='[MQTT publish|light] room[{}] data[{}]'.format(p['src_room'], state)
             mqttc.publish("kocom/{}/light/state".format(p['src_room']), json.dumps(state))
