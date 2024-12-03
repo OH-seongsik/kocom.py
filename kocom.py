@@ -495,7 +495,8 @@ def mqtt_on_message(mqttc, obj, msg):
     # kocom/livingroom/fan/command
     elif 'fan' in topic_d:
         dev_id = device_h_dic['fan'] + room_h_dic.get(topic_d[1])
-        onoff_dic = {'off':'1000', 'on':'1100'}  #onoff_dic = {'off':'0000', 'on':'1101'}
+        #onoff_dic = {'off':'1000', 'on':'1100'}  
+        onoff_dic = {'off':'0000', 'on':'1101'}
         speed_dic = {'Low':'40', 'Medium':'80', 'High':'c0'}
         init_fan_mode = config.get('User', 'init_fan_mode')
         if command in onoff_dic.keys(): # fan on off with previous speed 
@@ -658,7 +659,7 @@ def publish_discovery(dev, sub=''):
             #ha_topic = 'homeassistant/light/kocom_livingroom_light1/config'
             topic = 'homeassistant/light/kocom_{}_light{}/config'.format(sub, num)
             payload = {
-                'name': 'Kocom {} Light{}'.format(sub, num),
+                'name': 'Kocom {} light{}'.format(sub, num),
                 'cmd_t': 'kocom/{}/light/{}/command'.format(sub, num),
                 'stat_t': 'kocom/{}/light/state'.format(sub),
                 'stat_val_tpl': '{{ value_json.light_' + str(num) + ' }}',
